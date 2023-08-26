@@ -1,7 +1,3 @@
-let complexExpression = "((18 * 3 + 8) / 19 - 32)²² * √(13 * (15 + 9)) + √6²"
-let squareExpression = ['1', '+', '5', '+', '4', '-', '(', '√', '3', '*', '7','+', '8', ')', '+', '√', '2', '+', '4']
-let basicOperationsExpression = '1 + ( 4 / 2 ) + ( 3 * ( 2 - 1 ) ) / 2'
-
 function compressExpression (expression) {
     let compressedExpression = expression.split('').filter(x=>x!==' ')
     let sectionOfNumbers = ''
@@ -27,12 +23,7 @@ function compressExpression (expression) {
     return newExpression
 }
 function resolveExpression (expression) {
-    // let parenthesisChecked = checkForParenthesis(compressExpression(expression))
-    // console.log(parenthesisChecked)
-    // let rootChecked = checkForRoots(parenthesisChecked)
-    // console.log(rootChecked)
-    // return resolveOperations(rootChecked)
-    return resolveOperations(checkForRoots(checkForParenthesis(compressExpression(expression))))
+    return resolveOperations(separateInTerms(checkForRoots(checkForParenthesis(compressExpression(expression)))))
 }
 function checkForParenthesis (expression) {
     let numberOfParenthesis = expression.filter(chart => chart === '(').length
@@ -45,7 +36,7 @@ function checkForParenthesis (expression) {
 function resolveParenthesis (parenthesis) {
     parenthesis.splice(0, 1)
     parenthesis.splice(-1, 1)
-    return resolveOperations(checkForRoots(parenthesis))
+    return resolveOperations(separateInTerms((checkForRoots(parenthesis))))
 }
 function checkForRoots (expression) {
     const numberOfRoots = expression.filter(chart => chart === '√').length
@@ -55,12 +46,43 @@ function checkForRoots (expression) {
         lastRoot.forEach(chart => {
             root.push(chart)
         })
-        expression.splice(expression.lastIndexOf('√'), root.length + 1, resolveRoot(resolveOperations(root.slice(1))))
+        expression.splice(expression.lastIndexOf('√'), root.length + 1, resolveRoot(resolveOperations(separateInTerms((root.slice(1))))))
     }
     return expression
 }
 function resolveRoot (expression) {
     return Math.sqrt(expression).toString()
+}
+function separateInTerms (expression) {
+    let terms = []
+    let numberOfTerms = expression.filter(chart=>chart === '+' || chart === '-').length + 1
+    for (let i = 0; i < numberOfTerms; i++) {
+        let indexOperation = []
+        if (expression.indexOf('+') !== -1) {
+            if (expression.indexOf('-') !== -1) {
+                if (expression.indexOf('+') < expression.indexOf('-')) {
+                    indexOperation = [expression.indexOf('+'), '+']
+                } else {
+                    indexOperation = [expression.indexOf('-'), '-']
+                }
+            } else {
+                indexOperation = [expression.indexOf('+'), '+']
+            }
+        } else {
+            if (expression.indexOf('-') !== -1) {
+                indexOperation = [expression.indexOf('-'), '-']
+            }
+        }
+        if ( indexOperation.length !== 0) {
+            let term = expression.splice(0, indexOperation[0] + 1)
+            term.splice(term.length - 1, 1)
+            terms.push(resolveOperations(term))
+            terms.push(indexOperation[1])
+        } else {
+            terms.push(resolveOperations(expression.splice(0, expression.length)))
+        }
+    }
+    return terms
 }
 function resolveOperations (basicExpression) {
     let num = 0
@@ -95,38 +117,6 @@ function resolveOperations (basicExpression) {
         }
     })
     return result.toString()
-}
-let anotherExpression = ['3', '*', '10', '+', '15', '/', '3', '-', '10']
-function separateInTerms (expression) {
-    let terms = []
-    let numberOfTerms = expression.filter(chart=>chart === '+' || chart === '-').length + 1
-    for (let i = 0; i < numberOfTerms; i++) {
-        let indexOperation = []
-        if (expression.indexOf('+')) {
-            if (expression.indexOf('-')) {
-                if (expression.indexOf('+') < expression.indexOf('-')) {
-                    indexOperation = [expression.indexOf('+'), '+']
-                } else {
-                    indexOperation = [expression.indexOf('-'), '-']
-                }
-            } else {
-                indexOperation = [expression.indexOf('+'), '+']
-            }
-        } else {
-            if (expression.indexOf('-')) {
-                indexOperation = [expression.indexOf('-'), '-']
-            }
-        }
-        if ( indexOperation.length !== 0) {
-            let term = expression.splice(0, indexOperation[0] + 1)
-            term.splice(term.length - 1, 1)
-            terms.push(resolveOperations(term))
-            terms.push(indexOperation[1])
-        } else {
-            terms.push(resolveOperations(expression.splice(0, expression.length - 1)))
-        }
-    }
-    return terms
 }
 
 
